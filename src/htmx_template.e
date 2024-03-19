@@ -5,7 +5,7 @@ note
 	revision: "$Revision$"
 
 class
-	HTMX_INDEX_TEMPLATE
+	HTMX_TEMPLATE
 
 inherit
 	SHARED_EXECUTION_ENVIRONMENT
@@ -25,7 +25,7 @@ create
 
 feature {NONE} -- Initialization
 
-	make_with_path (d: like document_root)
+	make_with_path (d: like document_root; a_template: STRING)
 
 			-- Initialize `Current'.
 		do
@@ -35,7 +35,7 @@ feature {NONE} -- Initialization
 				document_root := d
 			end
 			set_template_folder (document_root)
-			set_template_file_name ("index.tpl")
+			set_template_file_name (a_template)
 			output := ""
 		end
 
