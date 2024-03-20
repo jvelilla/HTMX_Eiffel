@@ -14,6 +14,8 @@ inherit
 	WSF_FILTERED_ROUTED_EXECUTION
 
 
+	WSF_ROUTED_URI_TEMPLATE_HELPER
+
 	WSF_ROUTED_URI_HELPER
 
 	SHARED_SERVICES
@@ -64,6 +66,8 @@ feature -- Router
 			map_uri_agent ("/count", agent handle_count,  router.methods_post)
 
 			map_uri_agent ("/contacts", agent handle_contacts,  router.methods_post)
+
+			map_uri_template_agent ("/contacts/{id}", agent handle_delete_contacts,  router.methods_delete)
 		end
 
 	handle_index (req: WSF_REQUEST; res: WSF_RESPONSE)
@@ -112,7 +116,7 @@ feature -- Router
 					shared_page.form.errors.force ("Email already exists")
 					l_error := True
 				else
-					create l_contact.make(l_name.value, l_email.value )
+					create l_contact.make(l_name.value, l_email.value, shared_contacts.contacts.count + 1 )
 					shared_page.data.put_contact (l_contact)
 				end
 			end
@@ -131,6 +135,34 @@ feature -- Router
 				l_index.process
 				new_response_post (req, res, l_res + l_index.output)
 			end
+		end
+
+	handle_delete_contacts (req: WSF_REQUEST; res: WSF_RESPONSE)
+		local
+			l_contact: CONTACT
+		do
+			if attached {WSF_STRING} req.path_parameter ("id") as l_id and then
+			  l_id.is_integer then
+				l_contact := shared_contacts.delete_by_id (l_id.integer_value)
+				new_response_no_content(req, res, "")
+			else
+
+				new_response_error_400(req, res, "Invalid id")
+			end
+		end
+
+
+	new_response_no_content (req: WSF_REQUEST; res: WSF_RESPONSE; output: STRING)
+		local
+			h: HTTP_HEADER
+		do
+			create h.make
+			h.put_content_type_text_html
+			h.put_content_length (output.count)
+			h.put_current_date
+			res.set_status_code ({HTTP_STATUS_CODE}.OK)
+			res.put_header_text (h.string)
+			res.put_string (output)
 		end
 
 	new_response_get (req: WSF_REQUEST; res: WSF_RESPONSE; output: STRING)
@@ -169,6 +201,19 @@ feature -- Router
 			h.put_content_length (output.count)
 			h.put_current_date
 			res.set_status_code (422)
+			res.put_header_text (h.string)
+			res.put_string (output)
+		end
+
+	new_response_error_400 (req: WSF_REQUEST; res: WSF_RESPONSE; output: STRING)
+		local
+			h: HTTP_HEADER
+		do
+			create h.make
+			h.put_content_type_text_html
+			h.put_content_length (output.count)
+			h.put_current_date
+			res.set_status_code (400)
 			res.put_header_text (h.string)
 			res.put_string (output)
 		end

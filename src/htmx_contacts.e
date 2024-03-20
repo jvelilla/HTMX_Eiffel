@@ -34,4 +34,20 @@ feature -- Element Change
 		do
 			Result := contacts.there_exists (agent (item: CONTACT; l_email: STRING): BOOLEAN do Result := item.email.same_string_general (l_email) end(?, a_email))
 		end
+
+	delete_by_id (a_id: INTEGER): detachable CONTACT
+		do
+
+			from
+				contacts.start
+			until
+				contacts.off or attached Result
+			loop
+				if contacts.item_for_iteration.id = a_id then
+					Result := contacts.item_for_iteration
+					contacts.remove
+				end
+				contacts.forth
+			end
+		end
 end

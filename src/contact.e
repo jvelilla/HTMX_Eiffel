@@ -12,14 +12,16 @@ create
 
 feature {NONE} -- Initialization
 
-	make (a_name: STRING; a_email: STRING)
+	make (a_name: STRING; a_email: STRING; a_id: INTEGER)
 		do
 			name := a_name
 		    email := a_email
+		    id := a_id
 		end
 
 feature -- Access
 
+	id: INTEGER
 	name: STRING
 	email: STRING
 end

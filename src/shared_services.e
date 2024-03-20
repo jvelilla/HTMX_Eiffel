@@ -20,7 +20,7 @@ feature -- Counter
     shared_contacts: HTMX_CONTACTS
         once
             create Result.make
-            Result.put_contact(create {CONTACT}.make("Joe Doe", "jd@example.com"))
+            Result.put_contact(create {CONTACT}.make("Joe Doe", "jd@example.com", 1))
         end
 
    shared_form_data: HTMX_FORM_DATA
