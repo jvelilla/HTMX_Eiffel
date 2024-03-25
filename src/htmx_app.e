@@ -7,7 +7,7 @@ note
 
 class
 	HTMX_APP
-	
+
 
 inherit
 	WSF_LAUNCHABLE_SERVICE
@@ -15,7 +15,7 @@ inherit
 			initialize
 		end
 	APPLICATION_LAUNCHER [HTMX_APP_EXECUTION]
-	
+
 
 create
 	make_and_launch
@@ -26,7 +26,7 @@ feature {NONE} -- Initialization
 			-- Initialize current service.
 		do
 			Precursor
-			set_service_option ("port", 9090)
+			set_service_option ("port", 9999)
 			set_service_option ("verbose", "yes")
 		end
 
