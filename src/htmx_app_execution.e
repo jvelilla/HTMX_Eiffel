@@ -53,6 +53,8 @@ feature -- Router
 
 	setup_router
 			-- Setup `router'
+		local
+			fhdl: WSF_FILE_SYSTEM_HANDLER
 		do
 				--| As example:
 				--|   /doc is dispatched to self documentated page
@@ -68,7 +70,10 @@ feature -- Router
 			map_uri_agent ("/contacts", agent handle_contacts,  router.methods_post)
 
 			map_uri_template_agent ("/contacts/{id}", agent handle_delete_contacts,  router.methods_delete)
-		end
+
+			create fhdl.make_hidden ("www")
+ 			router.handle ("/", fhdl, router.methods_GET)
+ 		end
 
 	handle_index (req: WSF_REQUEST; res: WSF_RESPONSE)
 		local
@@ -77,6 +82,7 @@ feature -- Router
 		do
 			create l_index.make_with_path (create {PATH}.make_from_string ("www"), "index.tpl")
 			shared_page.form.clear
+			l_index.add_value(req.absolute_script_url (""), "host")
 			l_index.add_value (shared_page.data.contacts, "contacts")
 			l_index.add_value (shared_page.form, "form_data")
 
@@ -91,6 +97,7 @@ feature -- Router
 			l_result: STRING_8
 		do
 			create l_index.make_with_path (create {PATH}.make_from_string ("www"), "counter.tpl")
+			l_index.add_value(req.absolute_script_url (""), "host")
 			l_index.add_value (shared_counter.count, "counter")
 			shared_counter.inc
 			l_index.process
@@ -122,15 +129,18 @@ feature -- Router
 			end
 			if l_error then
 				create l_index.make_with_path (create {PATH}.make_from_string ("www"), "form.tpl")
+				l_index.add_value(req.absolute_script_url (""), "host")
 				l_index.add_value (shared_page.form, "form_data")
 				l_index.process
 				new_response_error (req, res, l_index.output)
 			else
 				create l_index.make_with_path (create {PATH}.make_from_string ("www"), "form.tpl")
+				l_index.add_value(req.absolute_script_url (""), "host")
 				l_index.add_value (create {HTMX_FORM_DATA}.make, "form_data")
 				l_index.process
 				l_res := l_index.output
 				create l_index.make_with_path (create {PATH}.make_from_string ("www"), "oob_contact.tpl")
+				l_index.add_value(req.absolute_script_url (""), "host")
 				l_index.add_value (l_contact, "item")
 				l_index.process
 				new_response_post (req, res, l_res + l_index.output)
@@ -141,6 +151,7 @@ feature -- Router
 		local
 			l_contact: CONTACT
 		do
+			{EXECUTION_ENVIRONMENT}.sleep (3_000_000_000)
 			if attached {WSF_STRING} req.path_parameter ("id") as l_id and then
 			  l_id.is_integer then
 				l_contact := shared_contacts.delete_by_id (l_id.integer_value)
