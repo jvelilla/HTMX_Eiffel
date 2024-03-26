@@ -1,25 +1,22 @@
 note
 	description: "[
-				application execution
-			]"
+			application execution
+		]"
 	date: "$Date: 2016-10-21 17:45:18 +0000 (Fri, 21 Oct 2016) $"
 	revision: "$Revision: 99331 $"
 
 class
 	HTMX_APP_EXECUTION
 
-
 inherit
 
 	WSF_FILTERED_ROUTED_EXECUTION
-
 
 	WSF_ROUTED_URI_TEMPLATE_HELPER
 
 	WSF_ROUTED_URI_HELPER
 
 	SHARED_SERVICES
-
 
 create
 	make
@@ -63,17 +60,20 @@ feature -- Router
 				--| Self documentation
 			router.handle ("/doc", create {WSF_ROUTER_SELF_DOCUMENTATION_HANDLER}.make (router), router.methods_GET)
 
-			map_uri_agent ("/", agent handle_index,  router.methods_get)
+			map_uri_agent ("/", agent handle_index, router.methods_get)
 
-			map_uri_agent ("/count", agent handle_count,  router.methods_post)
+			map_uri_agent ("/count", agent handle_count, router.methods_post)
 
-			map_uri_agent ("/contacts", agent handle_contacts,  router.methods_post)
+			map_uri_agent ("/contacts", agent handle_contacts, router.methods_post)
 
-			map_uri_template_agent ("/contacts/{id}", agent handle_delete_contacts,  router.methods_delete)
+			map_uri_template_agent ("/contacts/{id}", agent handle_delete_contacts, router.methods_delete)
 
 			create fhdl.make_hidden ("www")
- 			router.handle ("/", fhdl, router.methods_GET)
- 		end
+			router.handle ("/", fhdl, router.methods_GET)
+		end
+
+
+feature -- Handlers
 
 	handle_index (req: WSF_REQUEST; res: WSF_RESPONSE)
 		local
@@ -82,14 +82,13 @@ feature -- Router
 		do
 			create l_index.make_with_path (create {PATH}.make_from_string ("www"), "index.tpl")
 			shared_page.form.clear
-			l_index.add_value(req.absolute_script_url (""), "host")
+			l_index.add_value (req.absolute_script_url (""), "host")
 			l_index.add_value (shared_page.data.contacts, "contacts")
 			l_index.add_value (shared_page.form, "form_data")
 
 			l_index.process
-			new_response_get (req, res, l_index.output)
+			new_response (req, res, l_index.output, {HTTP_STATUS_CODE}.ok)
 		end
-
 
 	handle_count (req: WSF_REQUEST; res: WSF_RESPONSE)
 		local
@@ -97,13 +96,12 @@ feature -- Router
 			l_result: STRING_8
 		do
 			create l_index.make_with_path (create {PATH}.make_from_string ("www"), "counter.tpl")
-			l_index.add_value(req.absolute_script_url (""), "host")
+			l_index.add_value (req.absolute_script_url (""), "host")
 			l_index.add_value (shared_counter.count, "counter")
 			shared_counter.inc
 			l_index.process
-			new_response_post (req, res, l_index.output)
+			new_response (req, res, l_index.output, {HTTP_STATUS_CODE}.ok)
 		end
-
 
 	handle_contacts (req: WSF_REQUEST; res: WSF_RESPONSE)
 		local
@@ -114,7 +112,7 @@ feature -- Router
 			l_res: STRING
 		do
 			shared_page.form.clear
-			if  attached {WSF_STRING} req.form_parameter ("name") as l_name and then
+			if attached {WSF_STRING} req.form_parameter ("name") as l_name and then
 				attached {WSF_STRING} req.form_parameter ("email") as l_email
 			then
 				if shared_contacts.has_email (l_email.value) then
@@ -123,27 +121,27 @@ feature -- Router
 					shared_page.form.errors.force ("Email already exists")
 					l_error := True
 				else
-					create l_contact.make(l_name.value, l_email.value, shared_contacts.contacts.count + 1 )
+					create l_contact.make (l_name.value, l_email.value, shared_contacts.contacts.count + 1)
 					shared_page.data.put_contact (l_contact)
 				end
 			end
 			if l_error then
 				create l_index.make_with_path (create {PATH}.make_from_string ("www"), "form.tpl")
-				l_index.add_value(req.absolute_script_url (""), "host")
+				l_index.add_value (req.absolute_script_url (""), "host")
 				l_index.add_value (shared_page.form, "form_data")
 				l_index.process
-				new_response_error (req, res, l_index.output)
+				new_response (req, res, l_index.output, {HTTP_STATUS_CODE}.unprocessable_entity)
 			else
 				create l_index.make_with_path (create {PATH}.make_from_string ("www"), "form.tpl")
-				l_index.add_value(req.absolute_script_url (""), "host")
+				l_index.add_value (req.absolute_script_url (""), "host")
 				l_index.add_value (create {HTMX_FORM_DATA}.make, "form_data")
 				l_index.process
 				l_res := l_index.output
 				create l_index.make_with_path (create {PATH}.make_from_string ("www"), "oob_contact.tpl")
-				l_index.add_value(req.absolute_script_url (""), "host")
+				l_index.add_value (req.absolute_script_url (""), "host")
 				l_index.add_value (l_contact, "item")
 				l_index.process
-				new_response_post (req, res, l_res + l_index.output)
+				new_response (req, res, l_res + l_index.output, {HTTP_STATUS_CODE}.ok)
 			end
 		end
 
@@ -153,17 +151,18 @@ feature -- Router
 		do
 			{EXECUTION_ENVIRONMENT}.sleep (3_000_000_000)
 			if attached {WSF_STRING} req.path_parameter ("id") as l_id and then
-			  l_id.is_integer then
+				l_id.is_integer then
 				l_contact := shared_contacts.delete_by_id (l_id.integer_value)
-				new_response_no_content(req, res, "")
+				new_response (req, res, "", {HTTP_STATUS_CODE}.ok)
 			else
 
-				new_response_error_400(req, res, "Invalid id")
+				new_response (req, res, "Invalid id", {HTTP_STATUS_CODE}.bad_request)
 			end
 		end
 
+feature -- HTTP response
 
-	new_response_no_content (req: WSF_REQUEST; res: WSF_RESPONSE; output: STRING)
+	new_response (req: WSF_REQUEST; res: WSF_RESPONSE; output: STRING; status_code: INTEGER)
 		local
 			h: HTTP_HEADER
 		do
@@ -171,60 +170,7 @@ feature -- Router
 			h.put_content_type_text_html
 			h.put_content_length (output.count)
 			h.put_current_date
-			res.set_status_code ({HTTP_STATUS_CODE}.OK)
-			res.put_header_text (h.string)
-			res.put_string (output)
-		end
-
-	new_response_get (req: WSF_REQUEST; res: WSF_RESPONSE; output: STRING)
-		local
-			h: HTTP_HEADER
-		do
-			create h.make
-			h.put_content_type_text_html
-			h.put_content_length (output.count)
-			h.put_current_date
-			res.set_status_code ({HTTP_STATUS_CODE}.ok)
-			res.put_header_text (h.string)
-			res.put_string (output)
-		end
-
-	new_response_post (req: WSF_REQUEST; res: WSF_RESPONSE; output: STRING)
-		local
-			h: HTTP_HEADER
-		do
-			create h.make
-			h.put_content_type_text_html
-			h.put_content_length (output.count)
-			h.put_current_date
-			res.set_status_code ({HTTP_STATUS_CODE}.ok)
-			res.put_header_text (h.string)
-			res.put_string (output)
-		end
-
-
-	new_response_error (req: WSF_REQUEST; res: WSF_RESPONSE; output: STRING)
-		local
-			h: HTTP_HEADER
-		do
-			create h.make
-			h.put_content_type_text_html
-			h.put_content_length (output.count)
-			h.put_current_date
-			res.set_status_code (422)
-			res.put_header_text (h.string)
-			res.put_string (output)
-		end
-
-	new_response_error_400 (req: WSF_REQUEST; res: WSF_RESPONSE; output: STRING)
-		local
-			h: HTTP_HEADER
-		do
-			create h.make
-			h.put_content_type_text_html
-			h.put_content_length (output.count)
-			h.put_current_date
-			res.set_status_code (400)
+			res.set_status_code (status_code)
 			res.put_header_text (h.string)
 			res.put_string (output)
 		end
